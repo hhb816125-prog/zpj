@@ -1,0 +1,2888 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Portfolio — 3D Motion &amp; AIGC Showreel</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Syne:wght@700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- GSAP 与 ScrollTrigger 动画引擎 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <style>
+    :root {
+      --bg-base: #060608;
+      --bg-surface: #0c0d12;
+      --accent-blue: #2E5CFF;
+      --accent-magenta: #C83BF5;
+      --accent-cyan: #3BF0F5;
+      --accent-gold: #FFE29A;
+      --text-muted: #8A8F9E;
+      --glass-surface: rgba(255, 255, 255, 0.035);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-display: 'Syne', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: #fff;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      cursor: default;
+      width: 100%;
+    }
+
+    a, button, [role="button"], .interactive-click {
+      cursor: pointer;
+    }
+
+    /* 顶部高定导航栏 */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: clamp(14px, 2.5vw, 24px) clamp(16px, 4vw, 48px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      background: linear-gradient(180deg, rgba(6, 6, 8, 0.9) 0%, rgba(6, 6, 8, 0) 100%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .logo {
+      font-family: var(--font-display);
+      font-size: clamp(0.95rem, 2vw, 1.15rem);
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .logo-pulse {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-magenta);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--accent-magenta);
+      flex-shrink: 0;
+    }
+
+    nav {
+      display: flex;
+      gap: clamp(14px, 2.5vw, 32px);
+      align-items: center;
+    }
+
+    nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: clamp(0.75rem, 1.5vw, 0.84rem);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 500;
+      transition: color 0.3s ease;
+      white-space: nowrap;
+    }
+
+    nav a:hover, nav a.active {
+      color: #fff;
+    }
+
+    .nav-badge {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(200, 59, 245, 0.16);
+      border: 1px solid rgba(200, 59, 245, 0.35);
+      color: var(--accent-gold);
+      margin-left: 2px;
+      font-family: var(--font-mono);
+      display: inline-block;
+    }
+
+    /* =========================================================================
+       1. 首屏 HERO：电影级居中构图与微视差通透背景
+       ========================================================================= */
+    .hero-container {
+      position: relative;
+      width: 100vw;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      perspective: 1000px;
+      padding: 80px 20px 40px;
+    }
+
+    .video-viewport {
+      position: absolute;
+      top: -5%;
+      left: -5%;
+      width: 110%;
+      height: 110%;
+      z-index: 1;
+      transform-style: preserve-3d;
+      will-change: transform;
+    }
+
+    .video-viewport video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: contrast(1.05) brightness(0.96);
+    }
+
+    .hero-mask {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      background: 
+        radial-gradient(circle at center, transparent 35%, rgba(6, 6, 8, 0.65) 80%, var(--bg-base) 98%),
+        linear-gradient(to bottom, transparent 60%, var(--bg-base) 100%);
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 1200px;
+      width: 100%;
+      padding: 0 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .sub-tag {
+      font-family: var(--font-mono);
+      font-size: clamp(0.68rem, 1.6vw, 0.8rem);
+      font-weight: 600;
+      letter-spacing: clamp(2px, 0.5vw, 4.5px);
+      text-transform: uppercase;
+      color: var(--accent-gold);
+      margin-bottom: clamp(14px, 2.5vh, 22px);
+      display: inline-block;
+      user-select: none;
+      text-shadow: 0 0 15px rgba(255, 226, 154, 0.4);
+    }
+
+    .hero-main-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 9vw, 6.8rem);
+      font-weight: 900;
+      line-height: 0.94;
+      text-transform: uppercase;
+      margin: 0 0 clamp(16px, 3vh, 26px) 0;
+      user-select: none;
+      background: linear-gradient(180deg, #FFFFFF 22%, #D7DCE7 52%, #858B9C 85%, #565C6D 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 6px 20px rgba(0, 0, 0, 0.9));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+    }
+
+    .hero-main-title span {
+      display: block;
+      text-align: center;
+      width: 100%;
+    }
+
+    .hero-main-title .line-weave {
+      letter-spacing: clamp(2px, 0.5vw, 6px);
+    }
+
+    .hero-main-title .line-the {
+      letter-spacing: clamp(6px, 1.8vw, 24px);
+      font-size: 0.95em;
+    }
+
+    .hero-main-title .line-dynamics {
+      letter-spacing: clamp(0px, 0.3vw, 4px);
+    }
+
+    .hero-bottom-tagline {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: clamp(0.72rem, 1.6vw, 0.82rem);
+      font-weight: 600;
+      letter-spacing: clamp(1.2px, 0.3vw, 2.8px);
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.88);
+      padding: clamp(6px, 1.2vw, 8px) clamp(16px, 3vw, 24px);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      margin-bottom: clamp(24px, 4vh, 38px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      white-space: nowrap;
+    }
+
+    .hero-bottom-tagline .pulse-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent-cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--accent-cyan);
+      animation: pulse 1.8s infinite;
+      flex-shrink: 0;
+    }
+
+    .magnetic-wrap {
+      display: inline-block;
+    }
+
+    .capsule-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: clamp(12px, 2vh, 16px) clamp(28px, 4vw, 42px);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      color: #fff;
+      font-size: clamp(0.75rem, 1.5vw, 0.85rem);
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-decoration: none;
+      text-transform: uppercase;
+      overflow: hidden;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
+      transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .capsule-btn::before {
+      content: '';
+      position: absolute;
+      top: var(--glow-y, 50%);
+      left: var(--glow-x, 50%);
+      width: 150px;
+      height: 150px;
+      background: radial-gradient(circle, rgba(200, 59, 245, 0.5) 0%, rgba(46, 92, 255, 0.3) 50%, transparent 70%);
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .capsule-btn:hover {
+      border-color: rgba(255, 226, 154, 0.55);
+      box-shadow: 0 18px 45px rgba(46, 92, 255, 0.35);
+    }
+
+    .capsule-btn:hover::before {
+      opacity: 1;
+    }
+
+    .capsule-btn span {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .capsule-btn svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
+    }
+
+    /* =========================================================================
+       2. MASTER SHOWREEL：紧凑居中展示屏与光影质感
+       ========================================================================= */
+    .showreel-screen {
+      position: relative;
+      width: 100%;
+      padding: clamp(32px, 6vw, 60px) clamp(16px, 4vw, 36px);
+      background: radial-gradient(circle at 50% 20%, rgba(200, 59, 245, 0.08) 0%, rgba(46, 92, 255, 0.05) 35%, transparent 70%), var(--bg-base);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .showreel-header {
+      text-align: center;
+      max-width: 920px;
+      margin: 0 auto clamp(20px, 4vh, 32px) auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      perspective: 1000px;
+      padding: 0 12px;
+    }
+
+    .showreel-header > * {
+      will-change: transform, opacity, filter;
+    }
+
+    .showreel-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 18px;
+      border-radius: 999px;
+      background: rgba(200, 59, 245, 0.12);
+      border: 1px solid rgba(200, 59, 245, 0.45);
+      font-size: clamp(0.65rem, 1.4vw, 0.74rem);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-family: var(--font-mono);
+      color: #fff;
+      margin-bottom: clamp(14px, 2.5vh, 22px);
+      box-shadow: 0 0 20px rgba(200, 59, 245, 0.25);
+    }
+
+    .showreel-pill-dot {
+      width: 7px;
+      height: 7px;
+      background: #ff4757;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #ff4757;
+      animation: pulse 1.4s infinite;
+      flex-shrink: 0;
+    }
+
+    .showreel-main-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 7.8vw, 6.2rem);
+      font-weight: 900;
+      line-height: 1.04;
+      letter-spacing: -1.2px;
+      text-transform: uppercase;
+      margin: 0 auto 16px auto;
+      text-align: center;
+      user-select: none;
+      background: linear-gradient(180deg, #FFFFFF 0%, #FFFFFF 28%, #D3D8E5 56%, #82889A 84%, #5A6070 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 8px 26px rgba(0, 0, 0, 0.9));
+    }
+
+    .showreel-desc {
+      font-size: clamp(0.85rem, 1.8vw, 1.15rem);
+      color: #A3A8BA;
+      max-width: 680px;
+      line-height: 1.6;
+      letter-spacing: 0.5px;
+    }
+
+    .showreel-stage-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 1260px;
+      margin: 0 auto;
+    }
+
+    .showreel-ambient-glow {
+      position: absolute;
+      inset: -6%;
+      background: radial-gradient(circle at 50% 50%, rgba(46, 92, 255, 0.28) 0%, rgba(200, 59, 245, 0.25) 45%, transparent 72%);
+      filter: blur(80px);
+      z-index: 1;
+      opacity: 0.75;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+    }
+
+    .showreel-frame-card {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: clamp(14px, 2vw, 24px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      overflow: hidden;
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.85);
+      z-index: 2;
+      cursor: pointer;
+      transition: border-color 0.4s ease, box-shadow 0.4s ease;
+      will-change: transform, opacity, filter;
+    }
+
+    .showreel-frame-card:hover {
+      border-color: rgba(255, 226, 154, 0.4);
+      box-shadow: 0 40px 110px rgba(46, 92, 255, 0.25);
+    }
+
+    .showreel-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .showreel-hud-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: clamp(12px, 2.5vw, 26px) clamp(14px, 2.8vw, 30px);
+      background: linear-gradient(180deg, rgba(6, 6, 8, 0.8) 0%, transparent 28%, transparent 64%, rgba(6, 6, 8, 0.95) 100%);
+      pointer-events: none;
+    }
+
+    .showreel-hud-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: clamp(0.64rem, 1.2vw, 0.76rem);
+      letter-spacing: 1.5px;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .hud-tag-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hud-chip {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-weight: 600;
+      color: #fff;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: clamp(0.6rem, 1.2vw, 0.72rem);
+    }
+
+    .hud-chip.tag-3d {
+      background: #191a20;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+
+    .hud-chip.selected-work {
+      background: rgba(190, 140, 255, 0.16);
+      border: 1px solid rgba(190, 140, 255, 0.42);
+      color: #D3B4FF;
+      font-weight: 700;
+      padding: 4px 14px;
+      border-radius: 999px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      box-shadow: 0 0 16px rgba(190, 140, 255, 0.22);
+    }
+
+    .showreel-center-play {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: clamp(54px, 8vw, 86px);
+      height: clamp(54px, 8vw, 86px);
+      border-radius: 50%;
+      background: rgba(11, 12, 17, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 12;
+      pointer-events: none;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease, background-color 0.3s ease;
+    }
+
+    .showreel-frame-card:hover .showreel-center-play {
+      transform: translate(-50%, -50%) scale(1.1);
+      background: rgba(46, 92, 255, 0.45);
+      border-color: rgba(255, 226, 154, 0.8);
+    }
+
+    .showreel-center-play svg {
+      width: 32%;
+      height: 32%;
+      fill: #fff;
+      margin-left: 3px;
+    }
+
+    .is-playing .showreel-center-play {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.6);
+    }
+
+    .showreel-hud-bottom {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: auto;
+    }
+
+    .hud-scrubber-track {
+      position: relative;
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 3px;
+      cursor: pointer;
+      transition: height 0.2s ease;
+    }
+
+    .hud-scrubber-track:hover {
+      height: 7px;
+    }
+
+    .hud-scrubber-track::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: -10px;
+      bottom: -10px;
+      z-index: 5;
+    }
+
+    .hud-scrubber-fill {
+      position: relative;
+      height: 100%;
+      width: 0%;
+      background: #FFFFFF;
+      border-radius: 3px;
+      pointer-events: none;
+    }
+
+    .hud-scrubber-fill::after {
+      content: '';
+      position: absolute;
+      right: -5px;
+      top: 50%;
+      transform: translateY(-50%) scale(1);
+      width: 11px;
+      height: 11px;
+      background: #FFFFFF;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(255, 255, 255, 0.95);
+      pointer-events: none;
+      transition: transform 0.15s ease;
+    }
+
+    .hud-scrubber-track:hover .hud-scrubber-fill::after {
+      transform: translateY(-50%) scale(1.3);
+      box-shadow: 0 0 12px rgba(255, 255, 255, 1);
+    }
+
+    .hud-ctrl-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hud-left-actions,
+    .hud-right-actions {
+      display: flex;
+      align-items: center;
+      gap: clamp(6px, 1.5vw, 14px);
+    }
+
+    .hud-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #fff;
+      font-size: clamp(0.7rem, 1.2vw, 0.78rem);
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      padding: clamp(5px, 1vw, 7px) clamp(12px, 2vw, 18px);
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+
+    .hud-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 226, 154, 0.6);
+      color: var(--accent-gold);
+      transform: translateY(-1px);
+    }
+
+    .hud-btn svg {
+      width: 13px;
+      height: 13px;
+      fill: currentColor;
+    }
+
+    .hud-btn.icon-only {
+      padding: 0;
+      width: clamp(30px, 4vw, 36px);
+      height: clamp(30px, 4vw, 36px);
+      justify-content: center;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .hud-timecode {
+      font-family: var(--font-mono);
+      font-size: clamp(0.68rem, 1.2vw, 0.76rem);
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.75);
+      white-space: nowrap;
+    }
+
+    .hud-center-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hud-btn.jump-ai-btn {
+      position: relative;
+      padding: clamp(5px, 1vw, 6px) clamp(10px, 1.8vw, 16px);
+      background: rgba(200, 59, 245, 0.12);
+      border: 1px solid rgba(200, 59, 245, 0.38);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 0 16px rgba(200, 59, 245, 0.16);
+      transition: all 0.25s ease;
+    }
+
+    .hud-btn.jump-ai-btn:hover {
+      background: rgba(200, 59, 245, 0.24);
+      border-color: rgba(200, 59, 245, 0.65);
+      color: #fff;
+      box-shadow: 0 0 25px rgba(200, 59, 245, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .hud-btn.jump-ai-btn .jump-ai-spark {
+      font-size: 0.85rem;
+      color: var(--accent-magenta);
+      text-shadow: 0 0 8px var(--accent-magenta);
+      animation: pulse 1.8s infinite;
+    }
+
+    .hud-btn.jump-ai-btn .jump-timecode-badge {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--accent-gold);
+      background: rgba(255, 226, 154, 0.14);
+      border: 1px solid rgba(255, 226, 154, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    }
+
+    .hud-btn.jump-ai-btn .jump-btn-divider {
+      width: 1px;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .hud-btn.jump-ai-btn .jump-btn-text {
+      font-size: 0.76rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.95);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .hud-btn.jump-ai-btn .jump-btn-arrow {
+      width: 12px;
+      height: 12px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform 0.25s ease;
+    }
+
+    .hud-btn.jump-ai-btn:hover .jump-btn-arrow {
+      transform: translateX(3px);
+      stroke: var(--accent-gold);
+    }
+
+    /* 视觉合集 (Master Showreel) 沉浸全屏模式 (穿透沙箱与浏览器限制的双保险) */
+    .showreel-frame-card.is-showreel-fullscreen {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+      z-index: 9999999 !important;
+      border-radius: 0 !important;
+      max-width: none !important;
+      background: #000 !important;
+      margin: 0 !important;
+      transform: none !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+
+    .showreel-frame-card.is-showreel-fullscreen .showreel-video {
+      object-fit: contain !important;
+    }
+
+    /* =========================================================================
+       3. 横向滚动展台基础与卡片排版
+       ========================================================================= */
+    .section-header {
+      padding: clamp(20px, 4vw, 36px) clamp(20px, 5vw, 50px) 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .section-header > * {
+      will-change: transform, opacity, filter;
+    }
+
+    .section-header h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 3.5vw, 3.2rem);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: -1px;
+    }
+
+    .section-header span {
+      display: inline-block;
+      color: var(--accent-magenta);
+      font-size: clamp(0.75rem, 1.4vw, 0.9rem);
+      letter-spacing: 2px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .horizontal-section {
+      position: relative;
+      width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      cursor: grab;
+      user-select: none;
+      -webkit-user-select: none;
+      scroll-behavior: auto !important;
+    }
+
+    .horizontal-section::-webkit-scrollbar {
+      display: none;
+    }
+
+    .horizontal-section.is-dragging {
+      cursor: grabbing;
+      scroll-behavior: auto !important;
+    }
+
+    .horizontal-section.is-dragging .work-card {
+      cursor: grabbing;
+    }
+
+    /* 精确按视口计算左右留白，保证卡片滑动停止时正中心对齐屏幕中央 (50vw) */
+    .horizontal-strip {
+      display: flex;
+      gap: clamp(24px, 4vw, 50px);
+      padding: 24px max(20px, calc(50vw - clamp(160px, 44vw, 320px))) 90px;
+      width: fit-content;
+      user-select: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .work-card {
+      position: relative;
+      width: clamp(310px, 86vw, 640px);
+      aspect-ratio: 16 / 9;
+      background: #0c0d12;
+      border: 1px solid var(--glass-border);
+      border-radius: clamp(14px, 2vw, 20px);
+      overflow: hidden;
+      flex-shrink: 0;
+      transition: opacity 0.4s ease, border-color 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease;
+      cursor: pointer;
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.6);
+    }
+
+    .work-card .media-box {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background: #000;
+    }
+
+    .work-card video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.94;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+      transition: opacity 0.4s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .work-card:hover video,
+    .work-card.is-hovered video {
+      opacity: 1;
+      transform: scale(1.04);
+    }
+
+    /* 悬停焦点高亮模式 (Focus Mode) */
+    .horizontal-strip.has-focus .work-card {
+      opacity: 0.32;
+    }
+
+    .horizontal-strip.has-focus .work-card.is-hovered {
+      opacity: 1;
+      border-color: rgba(59, 240, 245, 0.6);
+      transform: scale(1.02);
+      box-shadow: 0 20px 60px rgba(46, 92, 255, 0.3);
+    }
+
+    /* 展台视频卡片全屏/放大沉浸模式 */
+    .work-card.is-card-fullscreen {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+      z-index: 9999999 !important;
+      border-radius: 0 !important;
+      max-width: none !important;
+      background: #000 !important;
+      margin: 0 !important;
+      transform: none !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+
+    .work-card.is-card-fullscreen .media-box {
+      width: 100vw !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+    }
+
+    .work-card.is-card-fullscreen video {
+      object-fit: contain !important;
+      opacity: 1 !important;
+    }
+
+    /* 卡片 HUD 贴角覆盖层 */
+    .card-hud-top {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: clamp(8px, 1.8vw, 12px) clamp(10px, 2vw, 16px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 15;
+      pointer-events: none;
+      font-family: var(--font-mono);
+      font-size: clamp(0.6rem, 1.1vw, 0.68rem);
+      letter-spacing: 1.2px;
+      color: rgba(255, 255, 255, 0.85);
+      background: linear-gradient(180deg, rgba(6, 6, 8, 0.8) 0%, transparent 100%);
+    }
+
+    .card-center-play {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: clamp(48px, 7vw, 60px);
+      height: clamp(48px, 7vw, 60px);
+      border-radius: 50%;
+      background: rgba(11, 12, 17, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 12;
+      pointer-events: none;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, background-color 0.25s ease;
+    }
+
+    .card-center-play svg {
+      width: 22px;
+      height: 22px;
+      fill: #fff;
+      margin-left: 3px;
+    }
+
+    .work-card:hover .card-center-play {
+      transform: translate(-50%, -50%) scale(1.08);
+      background: rgba(46, 92, 255, 0.45);
+      border-color: rgba(255, 226, 154, 0.8);
+    }
+
+    .work-card.is-playing .card-center-play {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.6);
+    }
+
+    .card-hud-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: clamp(8px, 1.8vw, 12px) clamp(10px, 2vw, 16px);
+      z-index: 15;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: linear-gradient(180deg, transparent 0%, rgba(6, 6, 8, 0.92) 100%);
+      pointer-events: auto;
+      opacity: 0.9;
+      transition: opacity 0.3s ease;
+    }
+
+    .work-card:hover .card-hud-bottom {
+      opacity: 1;
+    }
+
+    .card-scrubber-track {
+      position: relative;
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: height 0.2s ease;
+    }
+
+    .card-scrubber-track:hover {
+      height: 6px;
+    }
+
+    .card-scrubber-track::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: -8px;
+      bottom: -8px;
+      z-index: 5;
+    }
+
+    .card-scrubber-fill {
+      position: relative;
+      height: 100%;
+      width: 0%;
+      background: #FFFFFF;
+      border-radius: 2px;
+      pointer-events: none;
+    }
+
+    .card-scrubber-fill::after {
+      content: '';
+      position: absolute;
+      right: -4px;
+      top: 50%;
+      transform: translateY(-50%) scale(1);
+      width: 9px;
+      height: 9px;
+      background: #FFFFFF;
+      border-radius: 50%;
+      box-shadow: 0 0 7px rgba(255, 255, 255, 0.9);
+      pointer-events: none;
+      transition: transform 0.15s ease;
+    }
+
+    .card-scrubber-track:hover .card-scrubber-fill::after {
+      transform: translateY(-50%) scale(1.3);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 1);
+    }
+
+    .card-ctrl-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-left-actions,
+    .card-right-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-hud-btn {
+      background: rgba(255, 255, 255, 0.09);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #fff;
+      font-size: clamp(0.65rem, 1.1vw, 0.72rem);
+      font-weight: 600;
+      letter-spacing: 1px;
+      font-family: var(--font-mono);
+      padding: clamp(4px, 0.8vw, 5px) clamp(8px, 1.4vw, 12px);
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+
+    .card-hud-btn:hover {
+      background: rgba(255, 255, 255, 0.24);
+      border-color: rgba(255, 226, 154, 0.65);
+      color: var(--accent-gold);
+      transform: translateY(-1px);
+    }
+
+    .card-hud-btn svg {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
+    }
+
+    .card-hud-btn.icon-only {
+      padding: 0;
+      width: clamp(26px, 3.5vw, 30px);
+      height: clamp(26px, 3.5vw, 30px);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .card-timecode {
+      font-family: var(--font-mono);
+      font-size: clamp(0.62rem, 1.1vw, 0.7rem);
+      letter-spacing: 0.8px;
+      color: rgba(255, 255, 255, 0.75);
+      margin-left: 2px;
+      white-space: nowrap;
+    }
+
+    /* =========================================================================
+       4. 详情交互预览弹窗 (Modal Lightbox)
+       ========================================================================= */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 4, 6, 0.88);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-backdrop.is-open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-dialog {
+      position: relative;
+      width: 100%;
+      max-width: 1160px;
+      max-height: 90vh;
+      background: #090A0F;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 40px 120px rgba(0, 0, 0, 0.95), 0 0 50px rgba(46, 92, 255, 0.2);
+      transform: scale(0.92) translateY(24px);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-backdrop.is-open .modal-dialog {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-header {
+      padding: 18px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .modal-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .modal-category {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 2px;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+    }
+
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .modal-close-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.25s ease;
+    }
+
+    .modal-close-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 226, 154, 0.6);
+      color: var(--accent-gold);
+      transform: rotate(90deg);
+    }
+
+    .modal-close-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .modal-body {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      overflow-y: auto;
+      max-height: calc(90vh - 84px);
+    }
+
+    @media (max-width: 960px) {
+      .modal-body {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .modal-media-view {
+      position: relative;
+      background: #000;
+      min-height: 420px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .modal-media-view video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .modal-breakdown-bar {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      display: flex;
+      gap: 8px;
+      z-index: 10;
+    }
+
+    .breakdown-tab {
+      background: rgba(9, 10, 15, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      color: #b0b5c4;
+      font-size: 0.68rem;
+      font-family: var(--font-mono);
+      letter-spacing: 1.2px;
+      padding: 5px 12px;
+      border-radius: 999px;
+      transition: all 0.25s ease;
+    }
+
+    .breakdown-tab:hover, .breakdown-tab.active {
+      color: #fff;
+      border-color: var(--accent-cyan);
+      background: rgba(46, 92, 255, 0.35);
+    }
+
+    .modal-info-panel {
+      padding: 30px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 22px;
+      background: #0c0d13;
+      border-left: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .modal-meta-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin: 18px 0;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .meta-item-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
+
+    .meta-item-val {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: #fff;
+      margin-top: 3px;
+    }
+
+    .tag-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag-cloud span {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(46, 92, 255, 0.12);
+      border: 1px solid rgba(46, 92, 255, 0.28);
+      color: #7997FF;
+    }
+
+    /* 页脚 */
+    footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: clamp(40px, 6vw, 70px) clamp(20px, 5vw, 50px);
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    footer a {
+      color: #fff;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+
+    footer a:hover {
+      color: var(--accent-magenta);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* 移动端细化自适应 (< 768px) */
+    @media (max-width: 768px) {
+      header {
+        padding: 14px 18px;
+      }
+      .hud-tag-group span:not(.hud-chip) {
+        display: none;
+      }
+      .hud-btn.jump-ai-btn .jump-btn-text span {
+        display: none;
+      }
+      .hud-btn.jump-ai-btn .jump-btn-divider {
+        display: none;
+      }
+      .hud-btn.jump-ai-btn {
+        padding: 4px 8px;
+      }
+      .card-play-label {
+        display: none;
+      }
+      .card-hud-top .hud-chip.selected-work {
+        display: none;
+      }
+      footer {
+        flex-direction: column;
+        gap: 18px;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部高定导航 -->
+  <header>
+    <div class="logo">
+      <span class="logo-pulse"></span>
+      MOTION / R&amp;D
+    </div>
+    <nav>
+      <a href="#showreel" class="active">视觉合集 <span class="nav-badge">精编版</span></a>
+      <a href="#works">商业作品</a>
+      <a href="#lab">AI与实拍</a>
+    </nav>
+  </header>
+
+  <!-- 1. 首屏 HERO：电影级居中构图与微视差背景 -->
+  <section class="hero-container" id="hero">
+    <div class="video-viewport" id="videoViewport">
+      <video id="heroBgVideo" autoplay muted loop playsinline preload="auto">
+        <source src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/hero.mp4" type="video/mp4" id="primaryHeroSource">
+        <source src="hero.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div class="hero-mask"></div>
+
+    <div class="hero-content">
+      <div class="sub-tag">C4D · REDSHIFT · AE · GENERATIVE AI</div>
+
+      <h1 class="hero-main-title">
+        <span class="line-weave">WEAVE</span>
+        <span class="line-the">THE</span>
+        <span class="line-dynamics">DYNAMICS</span>
+      </h1>
+
+      <div class="hero-bottom-tagline">
+        <span class="pulse-dot"></span>
+        <span>3D Render &amp; Motion Design</span>
+      </div>
+
+      <div class="magnetic-wrap" id="magnetWrap">
+        <a href="#showreel" class="capsule-btn" id="magnetBtn">
+          <span>
+            <svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+            Explore Showreel
+          </span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. MASTER SHOWREEL：紧凑居中展示屏 -->
+  <section class="showreel-screen" id="showreel">
+    <div class="showreel-header">
+      <div class="showreel-pill">
+        <span class="showreel-pill-dot"></span>
+        FEATURED MASTER REEL 2026
+      </div>
+      <h2 class="showreel-main-title">THE<br>MOTION<br>ESSENCE</h2>
+      <p class="showreel-desc">
+        三维动态 &amp; AIGC 视觉合集
+      </p>
+    </div>
+
+    <div class="showreel-stage-wrap">
+      <div class="showreel-ambient-glow" id="showreelGlow"></div>
+
+      <!-- 居中 16:9 框架卡片 -->
+      <div class="showreel-frame-card" id="showreelCard">
+        <video class="showreel-video" id="masterVideo" playsinline preload="metadata" muted loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/%E7%B2%BE%E5%89%AA%E8%A7%86%E9%A2%91%E5%90%88%E9%9B%86_2.mp4#t=0.001"></video>
+
+        <!-- HUD 贴角覆盖层 -->
+        <div class="showreel-hud-overlay">
+          <div class="showreel-hud-top">
+            <div class="hud-tag-group">
+              <span class="hud-chip tag-3d">3D + AI</span>
+              <span>DESIGN // INTELLIGENT VISUALIZATION</span>
+            </div>
+            <div class="hud-tag-group">
+              <span class="hud-chip selected-work">SELECTED WORK</span>
+            </div>
+          </div>
+
+          <div class="showreel-center-play" id="centerPlayIcon">
+            <svg viewBox="0 0 24 24">
+              <polygon points="6 4 20 12 6 20 6 4"></polygon>
+            </svg>
+          </div>
+
+          <div class="showreel-hud-bottom" id="hudBottomDock">
+            <div class="hud-scrubber-track" id="hudScrubberTrack">
+              <div class="hud-scrubber-fill" id="hudScrubberFill"></div>
+            </div>
+
+            <div class="hud-ctrl-bar">
+              <div class="hud-left-actions">
+                <button class="hud-btn" id="playToggleBtn">
+                  <svg viewBox="0 0 24 24" id="playSvgIcon">
+                    <polygon points="6 4 20 12 6 20 6 4"></polygon>
+                  </svg>
+                  <span id="playBtnLabel">PLAY</span>
+                </button>
+
+                <button class="hud-btn icon-only" id="audioToggleBtn" title="开启声音">
+                  <svg viewBox="0 0 24 24" id="audioSvgIcon">
+                    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                  </svg>
+                </button>
+
+                <div class="hud-timecode">
+                  <span id="currTimeCode">00:00</span> / <span id="durTimeCode">00:00</span>
+                </div>
+              </div>
+
+              <!-- 中间：直达 01:38 AI 视觉专区高定胶囊按钮 -->
+              <div class="hud-center-actions">
+                <button class="hud-btn jump-ai-btn" id="jumpToAiBtn" title="一键直达 01:38 AIGC 生成式专区">
+                  <span class="jump-ai-spark">✦</span>
+                  <span class="jump-timecode-badge">01:38</span>
+                  <span class="jump-btn-divider"></span>
+                  <span class="jump-btn-text">
+                    <span>AI 视觉专区</span>
+                    <svg class="jump-btn-arrow" viewBox="0 0 24 24">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </span>
+                </button>
+              </div>
+
+              <div class="hud-right-actions">
+                <button class="hud-btn" id="speedToggleBtn" title="切换播放倍速">
+                  <span id="speedBtnLabel">1.0X</span>
+                </button>
+
+                <button class="hud-btn icon-only" id="fullscreenToggleBtn" title="全屏">
+                  <svg viewBox="0 0 24 24" id="fullscreenSvgIcon">
+                    <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 板块三：精选作品横向滚动展台 -->
+  <section id="works">
+    <div class="section-header">
+      <div>
+        <span>SELECTED PROJECTS</span>
+        <h2>Commercial &amp; Motion</h2>
+      </div>
+      <div id="projectCounter">[ 01 — 08 ]</div>
+    </div>
+
+    <div class="horizontal-section" id="horizontalSection">
+      <div class="horizontal-strip" id="horizontalStrip">
+        <!-- 视频卡片 01 -->
+        <div class="work-card card-player" data-index="0">
+          <div class="media-box">
+            <video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/01.mp4#t=0.001"></video>
+          </div>
+          <div class="card-hud-top">
+            <div class="hud-tag-group"><span class="hud-chip tag-3d">3D</span><span>MOTION // PRODUCT</span></div>
+            <div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div>
+          </div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 视频卡片 02 -->
+        <div class="work-card card-player" data-index="1">
+          <div class="media-box">
+            <video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/02.mp4#t=0.001"></video>
+          </div>
+          <div class="card-hud-top">
+            <div class="hud-tag-group"><span class="hud-chip tag-3d">3D</span><span>MOTION // PRODUCT</span></div>
+            <div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div>
+          </div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 视频卡片 03 -->
+        <div class="work-card card-player" data-index="2">
+          <div class="media-box">
+            <video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/03.mp4#t=0.001"></video>
+          </div>
+          <div class="card-hud-top">
+            <div class="hud-tag-group"><span class="hud-chip tag-3d">3D</span><span>MOTION // PRODUCT</span></div>
+            <div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div>
+          </div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 视频卡片 04 (替换为 04-1.mp4 并精选呈现) -->
+        <div class="work-card card-player" data-index="3">
+          <div class="media-box">
+            <video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/04-1.mp4#t=0.001"></video>
+          </div>
+          <div class="card-hud-top">
+            <div class="hud-tag-group"><span class="hud-chip tag-3d">3D</span><span>MOTION // PRODUCT</span></div>
+            <div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div>
+          </div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 视频卡片 05 (替换为 05-1.mp4 并精选呈现) -->
+        <div class="work-card card-player" data-index="4">
+          <div class="media-box">
+            <video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/05-1.mp4#t=0.001"></video>
+          </div>
+          <div class="card-hud-top">
+            <div class="hud-tag-group"><span class="hud-chip tag-3d">3D</span><span>MOTION // PRODUCT</span></div>
+            <div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div>
+          </div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 视频卡片 06 -->
+        <div class="work-card card-player" data-index="5">
+          <div class="media-box">
+            <video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/06.mp4#t=0.001"></video>
+          </div>
+          <div class="card-hud-top">
+            <div class="hud-tag-group"><span class="hud-chip tag-3d">3D</span><span>MOTION // PRODUCT</span></div>
+            <div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div>
+          </div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 视频卡片 07 -->
+        <div class="work-card card-player" data-index="6">
+          <div class="media-box">
+            <video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/07.mp4#t=0.001"></video>
+          </div>
+          <div class="card-hud-top">
+            <div class="hud-tag-group"><span class="hud-chip tag-3d">3D</span><span>MOTION // PRODUCT</span></div>
+            <div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div>
+          </div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 视频卡片 08 -->
+        <div class="work-card card-player" data-index="7">
+          <div class="media-box">
+            <video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/08.mp4#t=0.001"></video>
+          </div>
+          <div class="card-hud-top">
+            <div class="hud-tag-group"><span class="hud-chip tag-3d">3D</span><span>MOTION // PRODUCT</span></div>
+            <div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div>
+          </div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. 板块四：AI与实拍结合 视频展台 -->
+  <section id="lab">
+    <div class="section-header" id="labHeader">
+      <div>
+        <span>GENERATIVE AI // REAL SHOT VIDEO</span>
+        <h2>AI + Real Footage</h2>
+      </div>
+      <div id="labCounter">[ 01 — 10 ]</div>
+    </div>
+
+    <div class="horizontal-section" id="labSection">
+      <div class="horizontal-strip" id="labStrip">
+        <!-- AI 视频卡片 01 -->
+        <div class="work-card card-player" data-index="0">
+          <div class="media-box"><video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/ai-1.mp4#t=0.001"></video></div>
+          <div class="card-hud-top"><div class="hud-tag-group"><span class="hud-chip tag-3d">AI + REAL</span><span>GENERATIVE AI // REAL</span></div><div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div></div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI 视频卡片 02 -->
+        <div class="work-card card-player" data-index="1">
+          <div class="media-box"><video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/ai-2.mp4#t=0.001"></video></div>
+          <div class="card-hud-top"><div class="hud-tag-group"><span class="hud-chip tag-3d">AI + REAL</span><span>GENERATIVE AI // REAL</span></div><div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div></div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI 视频卡片 03 -->
+        <div class="work-card card-player" data-index="2">
+          <div class="media-box"><video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/ai-2-1.mp4#t=0.001"></video></div>
+          <div class="card-hud-top"><div class="hud-tag-group"><span class="hud-chip tag-3d">AI + REAL</span><span>GENERATIVE AI // REAL</span></div><div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div></div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI 视频卡片 04 -->
+        <div class="work-card card-player" data-index="3">
+          <div class="media-box"><video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/ai-3.mp4#t=0.001"></video></div>
+          <div class="card-hud-top"><div class="hud-tag-group"><span class="hud-chip tag-3d">AI + REAL</span><span>GENERATIVE AI // REAL</span></div><div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div></div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI 视频卡片 05 -->
+        <div class="work-card card-player" data-index="4">
+          <div class="media-box"><video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/ai-4.mp4#t=0.001"></video></div>
+          <div class="card-hud-top"><div class="hud-tag-group"><span class="hud-chip tag-3d">AI + REAL</span><span>GENERATIVE AI // REAL</span></div><div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div></div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI 视频卡片 06 -->
+        <div class="work-card card-player" data-index="5">
+          <div class="media-box"><video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/ai-5.mp4#t=0.001"></video></div>
+          <div class="card-hud-top"><div class="hud-tag-group"><span class="hud-chip tag-3d">AI + REAL</span><span>GENERATIVE AI // REAL</span></div><div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div></div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI 视频卡片 07 -->
+        <div class="work-card card-player" data-index="6">
+          <div class="media-box"><video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/ai-6%E6%9B%BF%E6%8D%A2.mp4#t=0.001"></video></div>
+          <div class="card-hud-top"><div class="hud-tag-group"><span class="hud-chip tag-3d">AI + REAL</span><span>GENERATIVE AI // REAL</span></div><div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div></div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI 视频卡片 08 -->
+        <div class="work-card card-player" data-index="7">
+          <div class="media-box"><video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/ai-7%E6%9B%BF%E6%8D%A2.mp4#t=0.001"></video></div>
+          <div class="card-hud-top"><div class="hud-tag-group"><span class="hud-chip tag-3d">AI + REAL</span><span>GENERATIVE AI // REAL</span></div><div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div></div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI 视频卡片 09 -->
+        <div class="work-card card-player" data-index="8">
+          <div class="media-box"><video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/ai-8%E6%9B%BF%E6%8D%A2.mp4#t=0.001"></video></div>
+          <div class="card-hud-top"><div class="hud-tag-group"><span class="hud-chip tag-3d">AI + REAL</span><span>GENERATIVE AI // REAL</span></div><div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div></div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI 视频卡片 10 -->
+        <div class="work-card card-player" data-index="9">
+          <div class="media-box"><video playsinline muted preload="metadata" loop src="https://portfolio-video-1529249005.cos.ap-guangzhou.myqcloud.com/ai-9.mp4#t=0.001"></video></div>
+          <div class="card-hud-top"><div class="hud-tag-group"><span class="hud-chip tag-3d">AI + REAL</span><span>GENERATIVE AI // REAL</span></div><div class="hud-tag-group"><span class="hud-chip selected-work">SELECTED WORK</span></div></div>
+          <div class="card-center-play"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg></div>
+          <div class="card-hud-bottom">
+            <div class="card-scrubber-track"><div class="card-scrubber-fill"></div></div>
+            <div class="card-ctrl-bar">
+              <div class="card-left-actions">
+                <button class="card-hud-btn card-play-btn" title="播放/暂停"><svg viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg><span class="card-play-label">PLAY</span></button>
+                <button class="card-hud-btn card-audio-btn icon-only" title="开启声音"><svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg></button>
+                <div class="card-timecode">00:00 / 00:00</div>
+              </div>
+              <div class="card-right-actions">
+                <button class="card-hud-btn card-speed-btn" title="切换倍速"><span class="speed-label">1.0X</span></button>
+                <button class="card-hud-btn card-fs-btn icon-only" title="全屏放大"><svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. 实时全屏交互预览弹窗 (Modal Lightbox) -->
+  <div class="modal-backdrop" id="projectModal" role="dialog" aria-modal="true">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-category" id="modalCat">C4D / FLUID DYNAMICS</span>
+          <h3 class="modal-title" id="modalTitle">QUANTUM AURORA REEL</h3>
+        </div>
+        <button class="modal-close-btn" id="modalCloseBtn" aria-label="关闭预览">
+          <svg viewBox="0 0 24 24">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-media-view">
+          <div class="modal-breakdown-bar">
+            <button class="breakdown-tab active" data-mode="render">01 FINAL RENDER</button>
+            <button class="breakdown-tab" data-mode="clay">02 CLAY BREAKDOWN</button>
+            <button class="breakdown-tab" data-mode="lighting">03 SHADING PASS</button>
+          </div>
+          <video id="modalVideo" autoplay muted loop playsinline></video>
+        </div>
+
+        <div class="modal-info-panel">
+          <div>
+            <div style="font-family: var(--font-mono); font-size:0.75rem; letter-spacing:1.5px; color:var(--accent-magenta); margin-bottom:8px;">
+              // PROJECT ARCHITECTURE &amp; SPEC
+            </div>
+            <p id="modalDesc" style="font-size:0.92rem; line-height:1.65; color:#C4CAD8;">
+              探索超导流体粒子在微重力环境下的动力学演变与光影重构。
+            </p>
+
+            <div class="modal-meta-row">
+              <div>
+                <div class="meta-item-label">Client / Context</div>
+                <div class="meta-item-val" id="modalClient">Apex Core Labs</div>
+              </div>
+              <div>
+                <div class="meta-item-label">Release Year</div>
+                <div class="meta-item-val" id="modalYear">2026</div>
+              </div>
+              <div>
+                <div class="meta-item-label">Master Spec</div>
+                <div class="meta-item-val">4K UHD / 60FPS</div>
+              </div>
+              <div>
+                <div class="meta-item-label">Color Space</div>
+                <div class="meta-item-val">ACEScg / 10-bit</div>
+              </div>
+            </div>
+
+            <div style="margin-top: 18px;">
+              <div class="meta-item-label" style="margin-bottom:8px;">Pipeline &amp; Toolchain</div>
+              <div class="tag-cloud" id="modalTagCloud">
+                <span>Cinema 4D</span>
+                <span>Redshift 3D</span>
+                <span>Houdini</span>
+                <span>ComfyUI</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:12px; align-items:center; border-top:1px solid rgba(255,255,255,0.08); padding-top:18px;">
+            <button class="hud-btn" id="modalPlayToggle" style="flex:1; justify-content:center;">
+              <span>PAUSE PLAYBACK</span>
+            </button>
+            <button class="hud-btn" id="modalMuteToggle">
+              <span>UNMUTE AUDIO</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 页脚 -->
+  <footer id="contact">
+    <div>
+      <div style="font-family:var(--font-display); font-size:1.15rem; font-weight:800; color:#fff; margin-bottom:6px;">MOTION LAB &amp; STUDIO</div>
+      <div>Designed for forward-thinking brands and visionary productions.</div>
+    </div>
+    <div style="display:flex; gap:24px;">
+      <a href="#hero">返回顶部</a>
+      <a href="#showreel">视觉合集</a>
+      <a href="#works">商业作品</a>
+      <a href="#lab">AI与实拍</a>
+    </div>
+  </footer>
+
+  <!-- 交互控制逻辑 -->
+  <script>
+    // 全局防崩溃与安全容错
+    window.addEventListener('unhandledrejection', (event) => {
+      event.preventDefault();
+    });
+    window.addEventListener('error', (event) => {
+      if (event.target && (event.target.tagName === 'VIDEO' || event.target.tagName === 'SOURCE')) {
+        event.stopPropagation();
+      }
+    }, true);
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const videoViewport = document.getElementById('videoViewport');
+    const heroBgVideo = document.getElementById('heroBgVideo');
+    const magnetWrap = document.getElementById('magnetWrap');
+    const magnetBtn = document.getElementById('magnetBtn');
+
+    // 1. 首屏 3D 微视差跟随
+    window.addEventListener('mousemove', (e) => {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      const dx = (e.clientX - cx) / cx;
+      const dy = (e.clientY - cy) / cy;
+
+      gsap.to(videoViewport, {
+        rotationY: dx * 3.5,
+        rotationX: -dy * 3.5,
+        x: dx * 12,
+        y: dy * 12,
+        duration: 1.2,
+        ease: 'power2.out'
+      });
+    });
+
+    // 2. 磁吸按钮与动态光晕跟踪
+    magnetWrap.addEventListener('mousemove', (e) => {
+      const rect = magnetWrap.getBoundingClientRect();
+      const relX = e.clientX - rect.left - rect.width / 2;
+      const relY = e.clientY - rect.top - rect.height / 2;
+
+      gsap.to(magnetBtn, {
+        x: relX * 0.35,
+        y: relY * 0.35,
+        duration: 0.4,
+        ease: 'power2.out'
+      });
+
+      const btnRect = magnetBtn.getBoundingClientRect();
+      magnetBtn.style.setProperty('--glow-x', `${e.clientX - btnRect.left}px`);
+      magnetBtn.style.setProperty('--glow-y', `${e.clientY - btnRect.top}px`);
+    });
+
+    magnetWrap.addEventListener('mouseleave', () => {
+      gsap.to(magnetBtn, {
+        x: 0,
+        y: 0,
+        duration: 0.7,
+        ease: 'elastic.out(1.1, 0.4)'
+      });
+    });
+
+    // 3. 页面滚动滑入动效 (GSAP ScrollTrigger 原版完全复原)
+    const showreelHeaderItems = [
+      document.querySelector('.showreel-pill'),
+      document.querySelector('.showreel-main-title'),
+      document.querySelector('.showreel-desc')
+    ].filter(Boolean);
+
+    gsap.from(showreelHeaderItems, {
+      scrollTrigger: {
+        trigger: '#showreel',
+        start: 'top 78%',
+        toggleActions: 'play none none reverse'
+      },
+      y: 80,
+      opacity: 0,
+      filter: 'blur(15px)',
+      duration: 1.2,
+      stagger: 0.18,
+      ease: 'power3.out',
+      clearProps: 'filter'
+    });
+
+    gsap.from('#showreelCard', {
+      scrollTrigger: {
+        trigger: '#showreel',
+        start: 'top 72%',
+        toggleActions: 'play none none reverse'
+      },
+      y: 80,
+      scale: 0.96,
+      opacity: 0,
+      filter: 'blur(10px)',
+      duration: 1.25,
+      ease: 'power3.out',
+      clearProps: 'filter'
+    });
+
+    const worksHeaderElements = [
+      document.querySelector('#works .section-header span'),
+      document.querySelector('#works .section-header h2'),
+      document.getElementById('projectCounter')
+    ].filter(Boolean);
+
+    gsap.from(worksHeaderElements, {
+      scrollTrigger: {
+        trigger: '#works',
+        start: 'top 94%',
+        toggleActions: 'play none none reverse'
+      },
+      y: 30,
+      opacity: 0,
+      filter: 'blur(8px)',
+      duration: 0.8,
+      stagger: 0.08,
+      ease: 'power2.out',
+      clearProps: 'filter'
+    });
+
+    const labHeaderElements = [
+      document.querySelector('#lab .section-header span'),
+      document.querySelector('#lab .section-header h2'),
+      document.getElementById('labCounter')
+    ].filter(Boolean);
+
+    gsap.from(labHeaderElements, {
+      scrollTrigger: {
+        trigger: '#lab',
+        start: 'top 94%',
+        toggleActions: 'play none none reverse'
+      },
+      y: 30,
+      opacity: 0,
+      filter: 'blur(8px)',
+      duration: 0.8,
+      stagger: 0.08,
+      ease: 'power2.out',
+      clearProps: 'filter'
+    });
+
+    // 4. 视频分级加载策略 (优先 hero.mp4 -> 就绪后加载 masterVideo -> 其余按需起播)
+    const masterVideo = document.getElementById('masterVideo');
+    function startMasterPreload() {
+      if (masterVideo) {
+        masterVideo.preload = 'auto';
+        masterVideo.load();
+      }
+    }
+    if (heroBgVideo) {
+      if (heroBgVideo.readyState >= 3) {
+        startMasterPreload();
+      } else {
+        heroBgVideo.addEventListener('canplaythrough', startMasterPreload, { once: true });
+        setTimeout(startMasterPreload, 1500);
+      }
+    } else {
+      startMasterPreload();
+    }
+
+    // 5. MASTER SHOWREEL 控制逻辑
+    const showreelCard = document.getElementById('showreelCard');
+    const playToggleBtn = document.getElementById('playToggleBtn');
+    const playSvgIcon = document.getElementById('playSvgIcon');
+    const playBtnLabel = document.getElementById('playBtnLabel');
+    const audioToggleBtn = document.getElementById('audioToggleBtn');
+    const audioSvgIcon = document.getElementById('audioSvgIcon');
+    const hudScrubberTrack = document.getElementById('hudScrubberTrack');
+    const hudScrubberFill = document.getElementById('hudScrubberFill');
+    const currTimeCode = document.getElementById('currTimeCode');
+    const durTimeCode = document.getElementById('durTimeCode');
+    const fullscreenToggleBtn = document.getElementById('fullscreenToggleBtn');
+    const speedToggleBtn = document.getElementById('speedToggleBtn');
+    const speedBtnLabel = document.getElementById('speedBtnLabel');
+    const jumpToAiBtn = document.getElementById('jumpToAiBtn');
+
+    const iconVolumeMuted = '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
+    const iconVolumeOn = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+
+    const speedOptions = [
+      { rate: 1.0, text: '1.0X' },
+      { rate: 1.25, text: '1.25X' },
+      { rate: 1.5, text: '1.5X' },
+      { rate: 2.0, text: '2.0X' },
+      { rate: 0.5, text: '0.5X' }
+    ];
+    let currentSpeedIdx = 0;
+
+    function formatTime(sec) {
+      if (isNaN(sec)) return '00:00';
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = Math.floor(sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function syncPlayState() {
+      if (masterVideo.paused) {
+        showreelCard.classList.remove('is-playing');
+        playBtnLabel.textContent = 'PLAY';
+        playSvgIcon.innerHTML = '<polygon points="6 4 20 12 6 20 6 4"></polygon>';
+      } else {
+        showreelCard.classList.add('is-playing');
+        playBtnLabel.textContent = 'PAUSE';
+        playSvgIcon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+      }
+    }
+
+    function toggleVideoPlay() {
+      if (masterVideo.paused) {
+        masterVideo.play().catch(() => {});
+      } else {
+        masterVideo.pause();
+      }
+      syncPlayState();
+    }
+
+    function toggleAudio() {
+      masterVideo.muted = !masterVideo.muted;
+      if (masterVideo.muted) {
+        audioToggleBtn.classList.remove('audio-active');
+        audioSvgIcon.innerHTML = iconVolumeMuted;
+        audioToggleBtn.title = '开启声音';
+      } else {
+        audioToggleBtn.classList.add('audio-active');
+        audioSvgIcon.innerHTML = iconVolumeOn;
+        audioToggleBtn.title = '静音';
+        masterVideo.volume = 0.95;
+      }
+    }
+
+    showreelCard.addEventListener('click', (e) => {
+      if (e.target.closest('#hudBottomDock')) return;
+      toggleVideoPlay();
+    });
+
+    playToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleVideoPlay();
+    });
+
+    audioToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleAudio();
+    });
+
+    speedToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      currentSpeedIdx = (currentSpeedIdx + 1) % speedOptions.length;
+      const opt = speedOptions[currentSpeedIdx];
+      masterVideo.playbackRate = opt.rate;
+      speedBtnLabel.textContent = opt.text;
+    });
+
+    if (jumpToAiBtn) {
+      jumpToAiBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        masterVideo.currentTime = 98;
+        if (masterVideo.paused) masterVideo.play().catch(() => {});
+        syncPlayState();
+      });
+    }
+
+    masterVideo.addEventListener('loadedmetadata', () => {
+      durTimeCode.textContent = formatTime(masterVideo.duration);
+    });
+
+    masterVideo.addEventListener('timeupdate', () => {
+      if (!masterVideo.duration) return;
+      if (hudScrubberTrack.getAttribute('data-scrubbing') === 'true') return;
+      const progress = (masterVideo.currentTime / masterVideo.duration) * 100;
+      hudScrubberFill.style.width = `${progress}%`;
+      currTimeCode.textContent = formatTime(masterVideo.currentTime);
+    });
+
+    // 视觉合集全屏功能 (双重保障：CSS 沉浸全屏 + 浏览器原生 Fullscreen API)
+    function toggleMasterFullscreen() {
+      const isFs = showreelCard.classList.contains('is-showreel-fullscreen');
+      const fsIcon = document.getElementById('fullscreenSvgIcon');
+
+      if (isFs) {
+        showreelCard.classList.remove('is-showreel-fullscreen');
+        document.body.style.overflow = '';
+        if (fsIcon) {
+          fsIcon.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+        }
+        fullscreenToggleBtn.title = '全屏';
+
+        if (document.fullscreenElement || document.webkitFullscreenElement) {
+          if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          }
+        }
+      } else {
+        showreelCard.classList.add('is-showreel-fullscreen');
+        document.body.style.overflow = 'hidden';
+        if (fsIcon) {
+          fsIcon.innerHTML = '<path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>';
+        }
+        fullscreenToggleBtn.title = '退出全屏';
+
+        try {
+          if (showreelCard.requestFullscreen) {
+            showreelCard.requestFullscreen().catch(() => {});
+          } else if (showreelCard.webkitRequestFullscreen) {
+            showreelCard.webkitRequestFullscreen();
+          }
+        } catch (err) {}
+      }
+    }
+
+    fullscreenToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleMasterFullscreen();
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      const isNativeFs = !!document.fullscreenElement;
+      if (!isNativeFs && showreelCard.classList.contains('is-showreel-fullscreen')) {
+        toggleMasterFullscreen();
+      }
+    });
+
+    // 6. 通用高精度全功能进度条拖拽系统
+    let globalDragDistance = 0;
+    function makeScrubberDraggable(track, fill, updateTimecodeFn, video) {
+      if (!track || !fill || !video) return;
+      let isScrubbing = false;
+      let wasPlaying = false;
+
+      function seekToEvent(e) {
+        if (!video.duration) return;
+        const rect = track.getBoundingClientRect();
+        const clientX = e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+        let pos = (clientX - rect.left) / rect.width;
+        pos = Math.max(0, Math.min(1, pos));
+
+        fill.style.width = `${pos * 100}%`;
+        const targetTime = pos * video.duration;
+        video.currentTime = targetTime;
+        if (updateTimecodeFn) updateTimecodeFn(targetTime, video.duration);
+      }
+
+      function startScrub(e) {
+        if (e.button !== undefined && e.button !== 0) return;
+        e.stopPropagation();
+        e.preventDefault();
+        globalDragDistance = 0;
+        isScrubbing = true;
+        track.setAttribute('data-scrubbing', 'true');
+        wasPlaying = !video.paused;
+        if (wasPlaying) video.pause();
+        seekToEvent(e);
+      }
+
+      function moveScrub(e) {
+        if (!isScrubbing) return;
+        e.preventDefault();
+        seekToEvent(e);
+      }
+
+      function endScrub(e) {
+        if (!isScrubbing) return;
+        isScrubbing = false;
+        track.removeAttribute('data-scrubbing');
+        if (wasPlaying) video.play().catch(() => {});
+      }
+
+      track.addEventListener('mousedown', startScrub);
+      window.addEventListener('mousemove', moveScrub);
+      window.addEventListener('mouseup', endScrub);
+
+      track.addEventListener('touchstart', startScrub, { passive: false });
+      window.addEventListener('touchmove', moveScrub, { passive: false });
+      window.addEventListener('touchend', endScrub);
+    }
+
+    makeScrubberDraggable(hudScrubberTrack, hudScrubberFill, (currentTime) => {
+      currTimeCode.textContent = formatTime(currentTime);
+    }, masterVideo);
+
+    // 7. 横向惯性拖拽与居中磁吸吸附系统 (防卡住、防左右抖动)
+    function setupDragCarousel(sectionId, counterId, totalCount) {
+      const horizontalSection = document.getElementById(sectionId);
+      if (!horizontalSection) return;
+      const counterEl = document.getElementById(counterId);
+
+      let isDown = false;
+      let startX = 0;
+      let scrollLeftStart = 0;
+      let lastX = 0;
+      let lastTime = 0;
+      let velocity = 0;
+      let momentumRaf = null;
+      let dragDeltaTotal = 0;
+
+      function cancelMomentum() {
+        if (momentumRaf) {
+          cancelAnimationFrame(momentumRaf);
+          momentumRaf = null;
+        }
+      }
+
+      function getClosestCardIndex() {
+        const cards = horizontalSection.querySelectorAll('.work-card');
+        if (!cards.length) return 0;
+        const currentCenter = horizontalSection.scrollLeft + horizontalSection.clientWidth / 2;
+        let closestIdx = 0;
+        let minDiff = Infinity;
+
+        cards.forEach((card, idx) => {
+          const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+          const diff = Math.abs(cardCenter - currentCenter);
+          if (diff < minDiff) {
+            minDiff = diff;
+            closestIdx = idx;
+          }
+        });
+        return closestIdx;
+      }
+
+      function snapToCard(targetIdx, duration = 480) {
+        const cards = horizontalSection.querySelectorAll('.work-card');
+        if (!cards.length) return;
+        const clampedIdx = Math.max(0, Math.min(cards.length - 1, targetIdx));
+        const card = cards[clampedIdx];
+
+        const maxScroll = Math.max(0, horizontalSection.scrollWidth - horizontalSection.clientWidth);
+        let targetScroll = card.offsetLeft + (card.offsetWidth / 2) - (horizontalSection.clientWidth / 2);
+        targetScroll = Math.max(0, Math.min(maxScroll, targetScroll));
+
+        cancelMomentum();
+        const startScroll = horizontalSection.scrollLeft;
+        const delta = targetScroll - startScroll;
+
+        if (Math.abs(delta) < 1) {
+          horizontalSection.scrollLeft = targetScroll;
+          if (counterEl) {
+            const padNum = (clampedIdx + 1).toString().padStart(2, '0');
+            const padTotal = totalCount.toString().padStart(2, '0');
+            counterEl.textContent = `[ ${padNum} — ${padTotal} ]`;
+          }
+          return;
+        }
+
+        const startTime = performance.now();
+
+        function stepSnap(now) {
+          const elapsed = now - startTime;
+          const progress = Math.min(1, elapsed / duration);
+          const ease = 1 - Math.pow(1 - progress, 3);
+          horizontalSection.scrollLeft = startScroll + delta * ease;
+
+          if (progress < 1) {
+            momentumRaf = requestAnimationFrame(stepSnap);
+          } else {
+            horizontalSection.scrollLeft = targetScroll;
+            momentumRaf = null;
+          }
+        }
+        momentumRaf = requestAnimationFrame(stepSnap);
+
+        if (counterEl) {
+          const padNum = (clampedIdx + 1).toString().padStart(2, '0');
+          const padTotal = totalCount.toString().padStart(2, '0');
+          counterEl.textContent = `[ ${padNum} — ${padTotal} ]`;
+        }
+      }
+
+      function handleDragStart(pageX) {
+        cancelMomentum();
+        isDown = true;
+        horizontalSection.classList.add('is-dragging');
+        startX = pageX - horizontalSection.offsetLeft;
+        scrollLeftStart = horizontalSection.scrollLeft;
+        lastX = pageX;
+        lastTime = performance.now();
+        velocity = 0;
+        dragDeltaTotal = 0;
+        globalDragDistance = 0;
+      }
+
+      function handleDragMove(pageX, e) {
+        if (!isDown) return;
+        const currentX = pageX;
+        const currentTime = performance.now();
+        const deltaX = currentX - lastX;
+        const deltaTime = currentTime - lastTime;
+
+        dragDeltaTotal += deltaX;
+        globalDragDistance += Math.abs(deltaX);
+
+        if (deltaTime > 0) {
+          const instantVelocity = deltaX / deltaTime;
+          velocity = velocity * 0.3 + instantVelocity * 0.7;
+        }
+
+        horizontalSection.scrollLeft -= deltaX;
+        lastX = currentX;
+        lastTime = currentTime;
+
+        if (Math.abs(dragDeltaTotal) > 6 && e && e.cancelable) {
+          e.preventDefault();
+        }
+      }
+
+      function handleDragEnd() {
+        if (!isDown) return;
+        isDown = false;
+        horizontalSection.classList.remove('is-dragging');
+
+        const cards = horizontalSection.querySelectorAll('.work-card');
+        const closestIdx = getClosestCardIndex();
+        let targetIdx = closestIdx;
+
+        if (velocity < -0.22 || dragDeltaTotal < -70) {
+          targetIdx = Math.min(closestIdx + 1, cards.length - 1);
+        } else if (velocity > 0.22 || dragDeltaTotal > 70) {
+          targetIdx = Math.max(closestIdx - 1, 0);
+        }
+
+        snapToCard(targetIdx);
+
+        setTimeout(() => {
+          globalDragDistance = 0;
+          dragDeltaTotal = 0;
+        }, 100);
+      }
+
+      horizontalSection.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        handleDragStart(e.pageX);
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        handleDragMove(e.pageX, e);
+      });
+
+      window.addEventListener('mouseup', handleDragEnd);
+
+      horizontalSection.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          handleDragStart(e.touches[0].pageX);
+        }
+      }, { passive: true });
+
+      horizontalSection.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1) {
+          handleDragMove(e.touches[0].pageX, e);
+        }
+      }, { passive: false });
+
+      horizontalSection.addEventListener('touchend', handleDragEnd);
+      horizontalSection.addEventListener('touchcancel', handleDragEnd);
+    }
+
+    setupDragCarousel('horizontalSection', 'projectCounter', 8);
+    setupDragCarousel('labSection', 'labCounter', 10);
+
+    // 8. 悬停暗淡聚焦模式 (Focus Mode)
+    document.querySelectorAll('.horizontal-strip').forEach(strip => {
+      const cards = strip.querySelectorAll('.work-card');
+      cards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+          strip.classList.add('has-focus');
+          card.classList.add('is-hovered');
+        });
+        card.addEventListener('mouseleave', () => {
+          strip.classList.remove('has-focus');
+          card.classList.remove('is-hovered');
+        });
+      });
+    });
+
+    // 9. 展台全功能卡片独立播放器逻辑
+    const cardPlayers = document.querySelectorAll('.card-player');
+    const cardSpeedOptions = [
+      { rate: 1.0, text: '1.0X' },
+      { rate: 1.25, text: '1.25X' },
+      { rate: 1.5, text: '1.5X' },
+      { rate: 2.0, text: '2.0X' },
+      { rate: 0.5, text: '0.5X' }
+    ];
+
+    cardPlayers.forEach((card) => {
+      const v = card.querySelector('video');
+      const playBtn = card.querySelector('.card-play-btn');
+      const playSvg = playBtn ? playBtn.querySelector('svg') : null;
+      const playLabel = playBtn ? playBtn.querySelector('.card-play-label') : null;
+      const audioBtn = card.querySelector('.card-audio-btn');
+      const audioSvg = audioBtn ? audioBtn.querySelector('svg') : null;
+      const timeEl = card.querySelector('.card-timecode');
+      const scrubberTrack = card.querySelector('.card-scrubber-track');
+      const scrubberFill = card.querySelector('.card-scrubber-fill');
+      const speedBtn = card.querySelector('.card-speed-btn');
+      const speedLabel = speedBtn ? speedBtn.querySelector('.speed-label') : null;
+      const fsBtn = card.querySelector('.card-fs-btn');
+      const fsSvg = fsBtn ? fsBtn.querySelector('svg') : null;
+
+      let currentSpeedIdx = 0;
+
+      function syncPlay() {
+        if (!v) return;
+        if (v.paused) {
+          card.classList.remove('is-playing');
+          if (playSvg) playSvg.innerHTML = '<polygon points="6 4 20 12 6 20 6 4"></polygon>';
+          if (playLabel) playLabel.textContent = 'PLAY';
+        } else {
+          card.classList.add('is-playing');
+          if (playSvg) playSvg.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+          if (playLabel) playLabel.textContent = 'PAUSE';
+        }
+      }
+
+      function togglePlay() {
+        if (!v) return;
+        if (v.paused) {
+          cardPlayers.forEach(otherCard => {
+            if (otherCard !== card) {
+              const otherV = otherCard.querySelector('video');
+              if (otherV && !otherV.paused) otherV.pause();
+            }
+          });
+
+          v.play().then(() => {
+            syncPlay();
+          }).catch(() => {
+            v.muted = true;
+            v.play().catch(() => {});
+            syncPlay();
+          });
+        } else {
+          v.pause();
+          syncPlay();
+        }
+      }
+
+      if (v) {
+        v.addEventListener('play', syncPlay);
+        v.addEventListener('pause', syncPlay);
+
+        v.addEventListener('loadedmetadata', () => {
+          if (timeEl) timeEl.textContent = `${formatTime(v.currentTime)} / ${formatTime(v.duration)}`;
+        });
+
+        v.addEventListener('timeupdate', () => {
+          if (!v.duration) return;
+          if (scrubberTrack && scrubberTrack.getAttribute('data-scrubbing') === 'true') return;
+          const pct = (v.currentTime / v.duration) * 100;
+          if (scrubberFill) scrubberFill.style.width = `${pct}%`;
+          if (timeEl) timeEl.textContent = `${formatTime(v.currentTime)} / ${formatTime(v.duration)}`;
+        });
+      }
+
+      card.addEventListener('click', (e) => {
+        if (globalDragDistance > 10) return;
+        if (e.target.closest('.card-hud-bottom') || e.target.closest('.card-hud-top')) return;
+        togglePlay();
+      });
+
+      if (playBtn) {
+        playBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (globalDragDistance > 10) return;
+          togglePlay();
+        });
+      }
+
+      if (audioBtn) {
+        audioBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (!v) return;
+          v.muted = !v.muted;
+          if (v.muted) {
+            audioSvg.innerHTML = '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
+            audioBtn.title = "开启声音";
+          } else {
+            audioSvg.innerHTML = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+            audioBtn.title = "静音";
+            v.volume = 0.95;
+          }
+        });
+      }
+
+      if (scrubberTrack && scrubberFill && v) {
+        makeScrubberDraggable(scrubberTrack, scrubberFill, (currentTime, totalDuration) => {
+          if (timeEl) timeEl.textContent = `${formatTime(currentTime)} / ${formatTime(totalDuration)}`;
+        }, v);
+      }
+
+      if (speedBtn) {
+        speedBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (!v) return;
+          currentSpeedIdx = (currentSpeedIdx + 1) % cardSpeedOptions.length;
+          const opt = cardSpeedOptions[currentSpeedIdx];
+          v.playbackRate = opt.rate;
+          if (speedLabel) speedLabel.textContent = opt.text;
+        });
+      }
+
+      function toggleCardFullscreen() {
+        const isFs = card.classList.contains('is-card-fullscreen');
+        if (isFs) {
+          card.classList.remove('is-card-fullscreen');
+          document.body.style.overflow = '';
+          if (fsSvg) {
+            fsSvg.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+          }
+          if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+          }
+        } else {
+          card.classList.add('is-card-fullscreen');
+          document.body.style.overflow = 'hidden';
+          if (fsSvg) {
+            fsSvg.innerHTML = '<path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>';
+          }
+          try {
+            if (card.requestFullscreen) {
+              card.requestFullscreen().catch(() => {});
+            } else if (card.webkitRequestFullscreen) {
+              card.webkitRequestFullscreen();
+            }
+          } catch (err) {}
+        }
+      }
+
+      if (fsBtn) {
+        fsBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleCardFullscreen();
+        });
+      }
+    });
+
+    // 10. Modal Lightbox 弹窗控制逻辑与通道滤镜切换
+    const projectModal = document.getElementById('projectModal');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+    const modalVideo = document.getElementById('modalVideo');
+    const modalPlayToggle = document.getElementById('modalPlayToggle');
+    const modalMuteToggle = document.getElementById('modalMuteToggle');
+    const breakdownTabs = document.querySelectorAll('.breakdown-tab');
+
+    function closeProjectModal() {
+      projectModal.classList.remove('is-open');
+      document.body.style.overflow = '';
+      if (modalVideo) modalVideo.pause();
+    }
+
+    if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeProjectModal);
+    if (projectModal) {
+      projectModal.addEventListener('click', (e) => {
+        if (e.target === projectModal) closeProjectModal();
+      });
+    }
+
+    if (modalPlayToggle && modalVideo) {
+      modalPlayToggle.addEventListener('click', () => {
+        if (modalVideo.paused) {
+          modalVideo.play();
+          modalPlayToggle.querySelector('span').textContent = 'PAUSE PLAYBACK';
+        } else {
+          modalVideo.pause();
+          modalPlayToggle.querySelector('span').textContent = 'RESUME PLAYBACK';
+        }
+      });
+    }
+
+    if (modalMuteToggle && modalVideo) {
+      modalMuteToggle.addEventListener('click', () => {
+        modalVideo.muted = !modalVideo.muted;
+        modalMuteToggle.querySelector('span').textContent = modalVideo.muted ? 'UNMUTE AUDIO' : 'MUTE AUDIO';
+      });
+    }
+
+    breakdownTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        breakdownTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const mode = tab.getAttribute('data-mode');
+
+        if (mode === 'clay') {
+          modalVideo.style.filter = 'grayscale(1) contrast(1.6) brightness(1.2)';
+        } else if (mode === 'lighting') {
+          modalVideo.style.filter = 'invert(0.1) saturate(1.8) contrast(1.3)';
+        } else {
+          modalVideo.style.filter = 'none';
+        }
+      });
+    });
+
+    // ESC 键退出全屏与关闭弹窗
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (projectModal && projectModal.classList.contains('is-open')) {
+          closeProjectModal();
+        }
+        if (showreelCard.classList.contains('is-showreel-fullscreen')) {
+          toggleMasterFullscreen();
+        }
+        document.querySelectorAll('.work-card.is-card-fullscreen').forEach(c => {
+          c.classList.remove('is-card-fullscreen');
+          const fsSvg = c.querySelector('.card-fs-btn svg');
+          if (fsSvg) {
+            fsSvg.innerHTML = '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+          }
+          document.body.style.overflow = '';
+        });
+      }
+    });
+  </script>
+</body>
+</html>
